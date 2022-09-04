@@ -2,6 +2,7 @@ const crypto = require('crypto');
 
 const bcrypt = require('bcryptjs');
 const sgMail = require('@sendgrid/mail');
+const { validationResult } = require('express-validator');
 
 const User = require('../models/user');
 
@@ -18,6 +19,11 @@ exports.getLogin = (req, res, next) => {
     path: '/login',
     docTitle: 'Login',
     errorMessage: message,
+    oldInput: {
+      email: '',
+      password: '',
+    },
+    validationErrors: [],
   });
 };
 
@@ -29,9 +35,15 @@ exports.getSignup = (req, res, next) => {
     message = null;
   }
   res.render('auth/signup', {
-    path: '/login',
-    docTitle: 'Login',
+    path: '/signup',
+    docTitle: 'Signup',
     errorMessage: message,
+    oldInput: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationErrors: [],
   });
 };
 
@@ -39,18 +51,15 @@ exports.postSignup = async (req, res, next) => {
   try {
     const { email, password, confirmPassword } = req.body;
 
-    const userDoc = await User.findOne({ email });
-
-    if (userDoc) {
-      req.flash('error', 'Email exists already, please pick a different one.');
-      res.redirect('/signup');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      req.flash('error', 'Passwords do not match!');
-      res.redirect('/signup');
-      return;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render('auth/signup', {
+        path: '/signup',
+        docTitle: 'Signup',
+        errorMessage: errors.array()[0].msg,
+        oldInput: { email, password, confirmPassword },
+        validationErrors: errors.array(),
+      });
     }
 
     const hashedPass = await bcrypt.hash(password, 12);
@@ -78,21 +87,32 @@ exports.postSignup = async (req, res, next) => {
 exports.postLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
 
-    if (!user) {
-      req.flash('error', 'Invalid email or password.');
-      res.redirect('/login');
-      return;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render('auth/login', {
+        path: '/login',
+        docTitle: 'Login',
+        errorMessage: errors.array()[0].msg,
+        oldInput: { email, password },
+        validationErrors: errors.array(),
+      });
     }
 
-    const passMatch = await bcrypt.compare(password, user.password);
+    const user = await User.findOne({ email });
+    let passMatch;
+    if (user) {
+      passMatch = await bcrypt.compare(password, user.password);
+    }
 
-    if (!passMatch) {
-      console.log('Wrong password!');
-      req.flash('error', 'Invalid email or password.');
-      res.redirect('/login');
-      return;
+    if (!user || !passMatch) {
+      return res.status(422).render('auth/login', {
+        path: '/login',
+        docTitle: 'Login',
+        errorMessage: 'Invalid email or password.',
+        oldInput: { email, password },
+        validationErrors: [{ param: 'email' }, { param: 'password' }],
+      });
     }
 
     req.session.isLoggedIn = true;
@@ -127,11 +147,24 @@ exports.getReset = (req, res, next) => {
     path: '/reset',
     docTitle: 'Reset Password',
     errorMessage: message,
+    oldInput: { email: '' },
+    validationErrors: [],
   });
 };
 
 exports.postReset = async (req, res, next) => {
   try {
+    const { email } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render('auth/reset', {
+        path: '/reset',
+        docTitle: 'Reset Password',
+        errorMessage: errors.array()[0].msg,
+        oldInput: { email },
+        validationErrors: errors.array(),
+      });
+    }
     let token;
     crypto.randomBytes(32, (err, buffer) => {
       if (err) {
@@ -194,6 +227,8 @@ exports.getNewPassword = async (req, res, next) => {
       errorMessage: message,
       userId: user._id.toString(),
       passwordToken: token,
+      oldInput: { password: '', confirmPassword: '' },
+      validationErrors: [],
     });
   } catch (error) {
     console.log(error);
@@ -209,10 +244,20 @@ exports.postNewPassword = async (req, res, next) => {
       passwordToken,
     } = req.body;
 
-    if (newPassword !== newConfirmPassword) {
-      req.flash('error', 'Passwords do not match!');
-      res.redirect(`/reset/${passwordToken}`);
-      return;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render('auth/new-password', {
+        path: '/new-password',
+        docTitle: 'New Password',
+        errorMessage: errors.array()[0].msg,
+        userId,
+        passwordToken,
+        oldInput: {
+          password: newPassword,
+          confirmPassword: newConfirmPassword,
+        },
+        validationErrors: errors.array(),
+      });
     }
 
     const user = await User.findOne({
