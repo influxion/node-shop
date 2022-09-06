@@ -24,7 +24,7 @@ Once files have been downloaded onto your machine in the main directory run.
 npm i
 ```
 
-Finally, add your `.env` file and add
+Finally, add your `.env` file and add the following code and replace the "<>" with your info.
 
 ```env
 PORT=<set to your desired port>
