@@ -11,7 +11,7 @@ const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
 
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const store = new MongoDBStore({
@@ -21,14 +21,14 @@ const store = new MongoDBStore({
 const csrfProtection = csrf(); //
 
 app.set('view engine', 'ejs');
-app.set('views');
+app.set('views', path.join(__dirname, './views'));
 
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false })); //* for parsing any data we may need to parse
-app.use(express.static(path.join(__dirname, 'public'))); //* making public folder accessible to the server so we can use css
+app.use(express.static(path.join(__dirname, './public'))); //* making public folder accessible to the server so we can use css
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
