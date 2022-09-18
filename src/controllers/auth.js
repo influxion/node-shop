@@ -79,8 +79,10 @@ exports.postSignup = async (req, res, next) => {
       subject: 'Signup succeeded!',
       html: '<h1>You successfully signed up!</h1>',
     });
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -122,10 +124,10 @@ exports.postLogin = async (req, res, next) => {
       res.redirect('/');
       return;
     });
-  } catch (error) {
-    console.log(error);
-    console.log('ERROR unable to login!');
-    res.redirect('/login');
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -196,8 +198,10 @@ exports.postReset = async (req, res, next) => {
           <p>Click this <a href="http://localhost:3000/reset/${token}">link</a> to reset your password.</p>
         `,
     });
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -230,8 +234,10 @@ exports.getNewPassword = async (req, res, next) => {
       oldInput: { password: '', confirmPassword: '' },
       validationErrors: [],
     });
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -276,7 +282,9 @@ exports.postNewPassword = async (req, res, next) => {
     await resetUser.save();
 
     res.redirect('/login');
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };

@@ -1,15 +1,35 @@
 const { body } = require('express-validator');
 
 exports.postAddProduct = [
-  body('title').isString().isLength({ min: 3 }).trim(),
-  body('imageUrl').isURL(),
-  body('price').isFloat().isDecimal({ decimal_digits: '2,2' }),
-  body('description').isLength({ min: 3, max: 255 }).trim(),
+  body('title', 'Title must contain at least 3 characters.')
+    .isString()
+    .isLength({ min: 3 })
+    .trim(),
+  body('imageUrl', 'Image URL must be a valid URL.').isURL(),
+  body('price', 'Price must be formatted using 2 decimal places.')
+    .isFloat()
+    .isDecimal({ force_decimal: true, decimal_digits: '2,' }),
+  body(
+    'description',
+    'Description must contain at least 3 characters and no more than 255.'
+  )
+    .isLength({ min: 3, max: 255 })
+    .trim(),
 ];
 
 exports.postEditProduct = [
-  body('title').isString().isLength({ min: 3 }).trim(),
-  body('imageUrl').isURL(),
-  body('price').isFloat().isDecimal({ decimal_digits: '2,2' }),
-  body('description').isLength({ min: 3, max: 255 }).trim(),
+  body('title', 'Title must contain at least 3 characters.')
+    .isString()
+    .isLength({ min: 3 })
+    .trim(),
+  body('imageUrl', 'Image URL must be a valid URL.').isURL(),
+  body('price', 'Price must be formatted using 2 decimal places.')
+    .isFloat()
+    .isDecimal({ force_decimal: true, decimal_digits: '2,' }),
+  body(
+    'description',
+    'Description must contain at least 3 characters and no more than 255.'
+  )
+    .isLength({ min: 3, max: 255 })
+    .trim(),
 ];
