@@ -8,7 +8,7 @@ const productSchema = new Schema({
     required: true,
   },
   price: {
-    type: Number,
+    type: mongoose.Types.Decimal128,
     required: true,
   },
   description: {

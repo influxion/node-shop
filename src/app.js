@@ -8,6 +8,7 @@ const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
+const multer = require('multer');
 
 const errorController = require('./controllers/error');
 
@@ -19,6 +20,26 @@ const store = new MongoDBStore({
   collection: 'sessions',
 });
 const csrfProtection = csrf(); //
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'data/images');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${new Date().getTime()}-${file.originalname}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpeg' ||
+    file.mimetype === 'image/jpg'
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './views'));
@@ -28,7 +49,11 @@ const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false })); //* for parsing any data we may need to parse
-app.use(express.static(path.join(__dirname, './public'))); //* making public folder accessible to the server so we can use css
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
+);
+app.use(express.static(path.join(__dirname, 'public'))); //* making public folder accessible to the server so we can use css
+app.use('/data/images', express.static(path.join(__dirname, '../data/images')));
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -55,6 +80,7 @@ app.get('/500', errorController.get500);
 app.use(errorController.get404);
 
 app.use((error, req, res, next) => {
+  console.log(error);
   res.redirect('/500');
 });
 

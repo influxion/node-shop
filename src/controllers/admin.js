@@ -1,12 +1,28 @@
-const mongoose = require('mongoose');
+const fileHelper = require('../util/file');
 
 const { validationResult } = require('express-validator');
 
 const Product = require('../models/product');
 
 exports.postAddProduct = async (req, res, next) => {
-  const { title, imageUrl, description, price } = req.body;
+  const { title, description, price } = req.body;
   try {
+    const image = req.file;
+    if (!image) {
+      return res.status(422).render('admin/edit-product', {
+        docTitle: 'Add Product',
+        path: '/admin/add-product',
+        editing: false,
+        hasError: true,
+        product: {
+          title,
+          price,
+          description,
+        },
+        errorMessage: 'Attached file is not an image.',
+        validationErrors: [],
+      });
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(422).render('admin/edit-product', {
@@ -16,7 +32,6 @@ exports.postAddProduct = async (req, res, next) => {
         hasError: true,
         product: {
           title,
-          imageUrl,
           price,
           description,
         },
@@ -24,6 +39,9 @@ exports.postAddProduct = async (req, res, next) => {
         validationErrors: errors.array(),
       });
     }
+
+    const imageUrl = image.path;
+
     const product = new Product({
       title,
       price,
@@ -101,7 +119,8 @@ exports.getEditProduct = async (req, res, next) => {
 
 exports.postEditProduct = async (req, res, next) => {
   try {
-    const { title, imageUrl, description, price, productId } = req.body;
+    const { title, description, price, productId } = req.body;
+    const image = req.file;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -112,7 +131,6 @@ exports.postEditProduct = async (req, res, next) => {
         hasError: true,
         product: {
           title,
-          imageUrl,
           price,
           description,
           _id: productId,
@@ -130,7 +148,10 @@ exports.postEditProduct = async (req, res, next) => {
     product.title = title;
     product.description = description;
     product.price = price;
-    product.imageUrl = imageUrl;
+    if (image) {
+      fileHelper.deleteFile(product.imageUrl);
+      product.imageUrl = image.path;
+    }
     await product.save();
     console.log('Updated product!');
     res.redirect('/admin/products');
@@ -144,6 +165,11 @@ exports.postEditProduct = async (req, res, next) => {
 exports.postDeleteProduct = async (req, res, next) => {
   try {
     const prodId = req.body.productId;
+    const product = await Product.findById(prodId);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    fileHelper.deleteFile(product.imageUrl);
     await Product.deleteOne({ _id: prodId, userId: req.session.user._id });
     console.log('Destroyed!');
     res.redirect('/admin/products');

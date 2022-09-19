@@ -5,7 +5,6 @@ exports.postAddProduct = [
     .isString()
     .isLength({ min: 3 })
     .trim(),
-  body('imageUrl', 'Image URL must be a valid URL.').isURL(),
   body('price', 'Price must be formatted using 2 decimal places.')
     .isFloat()
     .isDecimal({ force_decimal: true, decimal_digits: '2,' }),
@@ -22,7 +21,6 @@ exports.postEditProduct = [
     .isString()
     .isLength({ min: 3 })
     .trim(),
-  body('imageUrl', 'Image URL must be a valid URL.').isURL(),
   body('price', 'Price must be formatted using 2 decimal places.')
     .isFloat()
     .isDecimal({ force_decimal: true, decimal_digits: '2,' }),
