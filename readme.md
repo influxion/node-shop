@@ -28,10 +28,13 @@ In the top level of the directory add a `data` folder and add 2 subfolders, `ima
 
 Finally, add your `.env` file and add the following code and replace the "<>" with your info.
 
+NOTE: You will need both a SendGrid API key & a Stripe API key. Both are able to be obtained for free from their sites by creating an account.
+
 ```env
 PORT=<set to your desired port>
 CONNECTION_URL=<mongodb connection url string>
 SESSION_SECRET=<this can be any string>
+STRIPE_API_KEY=<this is your stripe api secret key>
 SENDGRID_API_KEY=<this is your sendgrid API key used to send the email confirmations>
 SHOP_EMAIL=<any email address, valid or not>
 ```
