@@ -12,6 +12,7 @@ const orderSchema = new Schema({
   user: {
     email: { type: String, required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    checkoutSession: { type: String, required: true },
   },
 });
 

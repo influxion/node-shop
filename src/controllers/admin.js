@@ -6,8 +6,10 @@ const Product = require('../models/product');
 
 exports.postAddProduct = async (req, res, next) => {
   const { title, description, price } = req.body;
+  const image = req.file;
+  const imageUrl = image.path;
   try {
-    const image = req.file;
+    const errors = validationResult(req);
     if (!image) {
       return res.status(422).render('admin/edit-product', {
         docTitle: 'Add Product',
@@ -19,12 +21,12 @@ exports.postAddProduct = async (req, res, next) => {
           price,
           description,
         },
-        errorMessage: 'Attached file is not an image.',
-        validationErrors: [],
+        errorMessage: 'There is no attached file or it is not of type image.',
+        validationErrors: [...errors.array(), { param: 'image' }],
       });
     }
-    const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      fileHelper.deleteFile(imageUrl);
       return res.status(422).render('admin/edit-product', {
         docTitle: 'Add Product',
         path: '/admin/add-product',
@@ -40,8 +42,6 @@ exports.postAddProduct = async (req, res, next) => {
       });
     }
 
-    const imageUrl = image.path;
-
     const product = new Product({
       title,
       price,
@@ -53,21 +53,6 @@ exports.postAddProduct = async (req, res, next) => {
     console.log('Created product!');
     res.redirect('/admin/products');
   } catch (err) {
-    // return res.status(500).render('admin/edit-product', {
-    //   docTitle: 'Add Product',
-    //   path: '/admin/add-product',
-    //   editing: false,
-    //   hasError: true,
-    //   product: {
-    //     title,
-    //     imageUrl,
-    //     price,
-    //     description,
-    //   },
-    //   errorMessage: 'Database operation failed, please try again!',
-    //   validationErrors: [],
-    // });
-
     const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
@@ -162,9 +147,9 @@ exports.postEditProduct = async (req, res, next) => {
   }
 };
 
-exports.postDeleteProduct = async (req, res, next) => {
+exports.deleteProduct = async (req, res, next) => {
   try {
-    const prodId = req.body.productId;
+    const prodId = req.params.productId;
     const product = await Product.findById(prodId);
     if (!product) {
       throw new Error('Product not found');
@@ -172,11 +157,9 @@ exports.postDeleteProduct = async (req, res, next) => {
     fileHelper.deleteFile(product.imageUrl);
     await Product.deleteOne({ _id: prodId, userId: req.session.user._id });
     console.log('Destroyed!');
-    res.redirect('/admin/products');
+    res.status(200).json({ message: 'Success!' });
   } catch (err) {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
+    res.status(500).json({ message: 'Deleting product failed!' });
   }
 };
 
