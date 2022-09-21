@@ -24,6 +24,8 @@ Once files have been downloaded onto your machine in the main directory run.
 npm i
 ```
 
+In the top level of the directory add a `data` folder and add 2 subfolders, `images` & `invoices`.
+
 Finally, add your `.env` file and add the following code and replace the "<>" with your info.
 
 ```env
