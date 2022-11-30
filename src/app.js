@@ -1,4 +1,6 @@
 const path = require('path');
+const fs = require('fs');
+const https = require('https');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -9,6 +11,9 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 
 const errorController = require('./controllers/error');
 
@@ -29,6 +34,9 @@ const fileStorage = multer.diskStorage({
   },
 });
 
+// const privateKey = fs.readFileSync(path.join(__dirname, '../server.key'));
+// const certificate = fs.readFileSync(path.join(__dirname, '../server.cert'));
+
 const fileFilter = (req, file, cb) => {
   if (
     file.mimetype === 'image/png' ||
@@ -48,11 +56,19 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
-app.use(bodyParser.urlencoded({ extended: false })); //* for parsing any data we may need to parse
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, 'access.log'),
+  { flags: 'a' }
+);
+
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined', { stream: accessLogStream }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
 );
-app.use(express.static(path.join(__dirname, 'public'))); //* making public folder accessible to the server so we can use css
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/data/images', express.static(path.join(__dirname, '../data/images')));
 app.use(
   session({
@@ -91,6 +107,9 @@ const PORT = process.env.PORT || 3001;
 
     console.log('Connected to database!');
 
+    // https
+    //   .createServer({ key: privateKey, cert: certificate }, app)
+    //   .listen(PORT);
     app.listen(PORT);
     console.log(`Server listening on port ${PORT}`);
   } catch (error) {
