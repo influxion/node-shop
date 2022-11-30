@@ -155,7 +155,7 @@ exports.getCheckout = async (req, res, next) => {
       docTitle: 'Checkout',
       path: '/cart',
       products: products,
-      totalSum: total,
+      totalSum: Math.round(total * 100) / 100,
       sessionId: session.id,
     });
   } catch (err) {
@@ -228,7 +228,9 @@ exports.postOrder = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ 'user.userId': req.session.user._id });
+    const orders = await Order.find({
+      'user.userId': req.session.user._id,
+    }).sort({ createdAt: -1 });
     res.render('shop/orders', {
       docTitle: 'Your Orders',
       path: '/orders',
